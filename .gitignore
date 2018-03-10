@@ -4,3 +4,5 @@ times.csv
 .classpath
 .project
 .settings/
+
+bin/
