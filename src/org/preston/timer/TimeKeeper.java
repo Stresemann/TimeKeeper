@@ -2,6 +2,7 @@ package org.preston.timer;
 
 import java.awt.BorderLayout;
 import java.awt.EventQueue;
+import java.awt.Font;
 
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -16,7 +17,13 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Date;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.awt.event.ActionEvent;
+import java.awt.Component;
+import javax.swing.Box;
+import javax.swing.JTextPane;
+import javax.swing.JLabel;
 
 public class TimeKeeper extends JFrame {
 
@@ -25,6 +32,7 @@ public class TimeKeeper extends JFrame {
 	private static Date startDate;
 	private static Date endDate;
 	private static FileWriter pw;
+	Timer timer = new Timer("Timer");
 	/**
 	 * Launch the application.
 	 */
@@ -51,19 +59,36 @@ public class TimeKeeper extends JFrame {
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		contentPane.setLayout(new BorderLayout(0, 0));
 		setContentPane(contentPane);
-		
 		JButton btnStartTimer = new JButton("Start Timer");
+		
 		btnStartTimer.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				System.out.println("button pressed " + new Date());
 				try {
 					if(startDate == null) {
 						writeStartDateToFile();
-			            btnStartTimer.setText("Timer Started");
+			            TimerTask repeatedTask = new TimerTask() {
+							int time = 0;
+			                public void run() {
+			                	time++;
+			                	if(time < 60) {
+			                		btnStartTimer.setText("Timer Started " + time);
+			                	} else {
+			                		btnStartTimer.setText("Timer Started " + (int)Math.floor(time/60) + ":" + (time - (int)Math.floor(time/60)*60));
+			                	}
+			                }
+			            };
+			             
+			            long delay  = 1000L;
+			            long period = 1000L;
+			            timer.scheduleAtFixedRate(repeatedTask, delay, period);
 					} else {
 						writeEndDateToFile();
 			            startDate = null;
 			            btnStartTimer.setText("Start Timer");
+			            if(timer != null)
+			            	timer.cancel();
+			            timer = new Timer();
 					}
 			        
 			            pw.flush();
@@ -77,14 +102,36 @@ public class TimeKeeper extends JFrame {
 			
 		});
 		contentPane.add(btnStartTimer, BorderLayout.CENTER);
+		
+		Component verticalStrut_1 = Box.createVerticalStrut(71);
+		contentPane.add(verticalStrut_1, BorderLayout.SOUTH);
+		
+		Component verticalStrut_2 = Box.createVerticalStrut(71);
+		contentPane.add(verticalStrut_2, BorderLayout.NORTH);
+		
+		Component horizontalStrut = Box.createHorizontalStrut(100);
+		contentPane.add(horizontalStrut, BorderLayout.WEST);
+		
+		Component horizontalStrut_1 = Box.createHorizontalStrut(100);
+		contentPane.add(horizontalStrut_1, BorderLayout.EAST);
+		
+		JPanel panel = new JPanel();
+		contentPane.add(panel, BorderLayout.NORTH);
+		
+		JLabel lblTimeKeeper = new JLabel("Time Keeper");
+		lblTimeKeeper.setFont(new Font("Courier New", Font.ITALIC, 19));
+		panel.add(lblTimeKeeper);
 	}
-
+	
 	private void writeStartDateToFile() throws IOException {
 		File f = new File(FILE_LOCATION);
 		if(!f.exists()) {
 			writeHeaderToFile();
 		} else if(!fileEndsInReturn()){
+			pw = new FileWriter(FILE_LOCATION,true);
 			pw.append("\n");
+			pw.flush();
+            pw.close();
 		}
 		pw = new FileWriter(FILE_LOCATION,true);
 		startDate = new Date();
